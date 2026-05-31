@@ -12,9 +12,15 @@ Open the native diff review window so the user can leave inline / file-level / o
 Invoke this exact shell command using your shell/bash tool. The window will block until the user clicks **Submit feedback** or closes it, so this call may take a long time — that is expected. Do **not** run anything else in parallel; wait for it to finish.
 
 ```bash
-if [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] && [ -x "${CLAUDE_PLUGIN_ROOT}/bin/plugin-run.sh" ]; then
+# Probe the plugin-root path directly with `-x` rather than gating on
+# `[ -n "$CLAUDE_PLUGIN_ROOT" ]`: agents (e.g. Claude Code) textually substitute
+# `${CLAUDE_PLUGIN_ROOT}` into this command but do NOT export it to the bash
+# subprocess, so a `-n "${CLAUDE_PLUGIN_ROOT:-}"` guard reads an empty runtime
+# env and wrongly skips an otherwise-valid path. The `-x` file test on the
+# substituted path is the real check.
+if [ -x "${CLAUDE_PLUGIN_ROOT}/bin/plugin-run.sh" ]; then
   bash "${CLAUDE_PLUGIN_ROOT}/bin/plugin-run.sh" $ARGUMENTS
-elif [ -n "${CODEX_PLUGIN_ROOT:-}" ] && [ -x "${CODEX_PLUGIN_ROOT}/bin/plugin-run.sh" ]; then
+elif [ -x "${CODEX_PLUGIN_ROOT}/bin/plugin-run.sh" ]; then
   bash "${CODEX_PLUGIN_ROOT}/bin/plugin-run.sh" $ARGUMENTS
 elif command -v slop-review >/dev/null 2>&1; then
   slop-review $ARGUMENTS
