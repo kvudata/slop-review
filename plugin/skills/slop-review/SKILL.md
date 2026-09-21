@@ -17,22 +17,22 @@ If the user has not made any changes yet, say so and skip this skill.
 
 ## Step 1 — invoke the dispatcher via the shell tool
 
-The plugin ships a self-contained dispatcher script. Invoke it via your shell tool with this exact command (substituting the user's intent for `<args>`):
+The plugin ships a self-contained dispatcher script. Resolve its path from this
+skill's installed location rather than relying on a plugin-root environment
+variable: the plugin root is two directories above the directory containing this
+`SKILL.md` (strip `/skills/slop-review/SKILL.md` from the resolved absolute path).
+Then invoke this exact command, substituting that path and the user's intent:
 
 ```bash
-if [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] && [ -x "${CLAUDE_PLUGIN_ROOT}/bin/plugin-run.sh" ]; then
-	bash "${CLAUDE_PLUGIN_ROOT}/bin/plugin-run.sh" <args>
-elif [ -n "${CODEX_PLUGIN_ROOT:-}" ] && [ -x "${CODEX_PLUGIN_ROOT}/bin/plugin-run.sh" ]; then
-	bash "${CODEX_PLUGIN_ROOT}/bin/plugin-run.sh" <args>
-elif command -v slop-review >/dev/null 2>&1; then
-	slop-review <args>
-else
-	echo "slop-review is not available. Install the plugin via your agent's plugin/marketplace command, or run: npm install -g slop-review" >&2
-	exit 1
-fi
+bash "<absolute-plugin-root>/bin/plugin-run.sh" <args>
 ```
 
-Agent plugin hosts expose the plugin checkout through an environment variable such as `${CLAUDE_PLUGIN_ROOT}` or `${CODEX_PLUGIN_ROOT}`. The shell block above checks both names, then falls back to a globally installed `slop-review` binary. On first invocation the dispatcher does a one-time `npm install` inside the plugin checkout to pull `glimpseui` and build its native helper, then exec's the CLI.
+For example, if this file is installed at
+`/cache/slop-review/<version>/skills/slop-review/SKILL.md`, invoke
+`/cache/slop-review/<version>/bin/plugin-run.sh`. The dispatcher resolves its own root
+from that path. On first invocation it performs a one-time `npm install` inside
+the plugin checkout to pull `glimpseui` and build its native helper, then execs
+the CLI.
 
 `<args>` is one of:
 
